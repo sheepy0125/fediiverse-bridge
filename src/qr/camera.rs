@@ -1,12 +1,10 @@
-use ctru::services::cam::{
-    BothOutwardCam, Cam, Camera as _, OutputFormat, Trimming, ViewSize, WhiteBalance,
-};
+use ctru::services::cam::{Cam, Camera, FrameRate, OutputFormat, Trimming, ViewSize, WhiteBalance};
 use std::time::Duration;
 
-const TIMEOUT: Duration = Duration::from_secs(10);
+const TIMEOUT: Duration = Duration::from_secs(5);
 
 pub struct CameraState<'a> {
-    camera: &'a mut BothOutwardCam,
+    camera: &'a mut dyn Camera,
     rgb565_camera_buf: Vec<u8>,
 }
 impl<'a> CameraState<'a> {
@@ -20,6 +18,7 @@ impl<'a> CameraState<'a> {
         camera.set_auto_exposure(true)?;
         camera.set_white_balance(WhiteBalance::Auto)?;
         camera.set_trimming(Trimming::new_centered_with_view(ViewSize::TopLCD))?;
+        camera.set_frame_rate(FrameRate::Fps30)?;
         let rgb565_camera_buf = Vec::<u8>::with_capacity(camera.final_byte_length());
 
         let s = Self {
@@ -48,7 +47,7 @@ impl<'a> CameraState<'a> {
             let source = &mut self.rgb565_camera_buf[raw_buf_idx..raw_buf_idx + 2]; // 16-bit
             let dest = &mut rgba8_camera_buf[converted_buf_idx..converted_buf_idx + 4]; // 32-bit
 
-            // N.B. little endian, 0x1F = (1 << 5) - 1 and 0x3F = (1 << 6) - 1
+            // N.B. little endian, 0x1F == (1 << 5) - 1 and 0x3F == (1 << 6) - 1
             let rgb565 = (source[1] as u16) << 8 | (source[0] as u16);
             let r5 = (rgb565 >> 11) & 0x1F;
             let g6 = (rgb565 >> 5) & 0x3F;

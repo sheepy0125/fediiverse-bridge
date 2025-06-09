@@ -1,5 +1,3 @@
-use crate::AppState;
-
 use cabbage::{F_TOP_HEIGHT, F_TOP_WIDTH};
 use citro2d::prelude::*;
 use fruit::prelude::*;
@@ -9,7 +7,7 @@ pub struct Background {
     //
 }
 
-impl Lifecycle<AppState> for Background {}
+impl LifecycleStateless for Background {}
 impl Blit for Background {
     fn blit(&self) -> anyhow::Result<()> {
         let style = RectangleDrawStyle::default().with_fill((0xfb, 0xdb, 0x65, 0xff));

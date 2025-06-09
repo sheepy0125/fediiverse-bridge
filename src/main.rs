@@ -11,17 +11,31 @@ use cabbage::prelude::*;
 use citro2d::prelude::*;
 use ctru::{
     prelude::*,
-    services::{cam::Cam, gfx::BottomScreen},
+    services::{cam::Cam, gfx::TopScreen},
 };
 use fruit::prelude::*;
 
 pub mod qr;
 pub mod ui;
 
-#[derive(Default)]
-pub struct AppState;
+pub struct AppState<'a> {
+    pub scanner: qr::scanner::Scanner,
+    pub camera: qr::camera::CameraState<'a>,
+    pub token: Option<String>,
+}
+impl<'a> AppState<'a> {
+    fn new(cam: &'a mut Cam) -> anyhow::Result<Self> {
+        let scanner = qr::scanner::Scanner::default();
+        let camera = qr::camera::CameraState::new(cam)?;
+        Ok(Self {
+            camera,
+            scanner,
+            token: None,
+        })
+    }
+}
 
-impl StateImpl<AppState> for State<'_, AppState> {
+impl StateImpl<AppState<'_>> for State<'_, AppState<'_>> {
     fn main(&mut self) -> Result<(), Error> {
         let mut c3d_instance = citro3d::Instance::new().unwrap();
 
@@ -29,19 +43,15 @@ impl StateImpl<AppState> for State<'_, AppState> {
         self.handles.apt.set_home_allowed(true);
         let cfgu = ctru::services::cfgu::Cfgu::new().unwrap();
 
-        let _console = Console::new(self.handles.gfx.top_screen.borrow_mut());
+        let _console = Console::new(self.handles.gfx.bottom_screen.borrow_mut());
 
         let c2d_instance = citro2d::Instance::new(&mut c3d_instance, &cfgu)?;
-        let mut target = citro2d::render::Target::<BottomScreen, _>::new(
-            self.handles.gfx.bottom_screen.borrow_mut(),
+        let mut target = citro2d::render::Target::<TopScreen, _>::new(
+            self.handles.gfx.top_screen.borrow_mut(),
             &c2d_instance,
         );
 
-        let mut cam = Cam::new()?;
-        let mut scanner = qr::scan::Scanner::default();
-        let mut camera = qr::camera::CameraState::new(&mut cam)?;
-
-        let mut ui = ui::background::Background::default();
+        let mut ui = ui::scan::QrScan::default();
 
         #[allow(unused_variables)]
         let (mut keys_held, mut keys_down, mut keys_up);
@@ -53,17 +63,10 @@ impl StateImpl<AppState> for State<'_, AppState> {
             keys_up = self.handles.hid.keys_up();
             !keys_held.contains(KeyPad::START) && self.handles.apt.main_loop()
         } {
-            println!("capturing");
-            camera.capture()?;
-            println!("converting");
-            camera.convert(&mut scanner.image);
-            println!("scanning");
-            scanner.scan()?;
-            println!("scanned!");
             {
                 let mut draw_target = target.begin();
 
-                draw_target.clear((0xfb, 0xdb, 0x65, 0xff));
+                draw_target.clear((0xff, 0xff, 0xff, 0xff));
                 ui.update_state(&self.handles, &mut self.app)?;
                 ui.blit_mut()?;
 
@@ -88,7 +91,9 @@ fn main() {
         gfx: &mut gfx,
     };
 
-    let mut state = State::new(AppState, handles);
+    let mut cam = Cam::new().expect("failed to obtain Cam service");
+    let app_state = AppState::new(&mut cam).unwrap();
+    let mut state = State::new(app_state, handles);
 
     if let Err(e) = state.main() {
         let _ = state.handle_error(e);
