@@ -1,0 +1,30 @@
+[package]
+name = "fediiverse-bridge"
+version = "0.1.0"
+edition = "2024"
+authors = [
+    "Ryan Sylvia Ember <sheepy@sheepy.moe>",
+    "760ceb3b9c0ba4872cadf3ce35a7a494",      # cool creature
+]
+
+[dependencies]
+fruit = { git = "https://git.sr.ht/~sheepy/fruit" }
+cabbage = { git = "https://git.sr.ht/~sheepy/cabbage" }
+
+citro2d = { git = "https://git.sr.ht/~sheepy/citro2d-rs" }
+citro2d-sys = { git = "https://git.sr.ht/~sheepy/citro2d-rs" }
+
+ctru-rs = { git = "https://github.com/rust3ds/ctru-rs" }
+ctru-sys = { git = "https://github.com/rust3ds/ctru-rs" }
+citro3d = { git = "https://github.com/rust3ds/citro3d-rs" }
+
+anyhow = { version = "1.0.93", features = ["backtrace"] }
+
+# local development!
+# [patch.'https://git.sr.ht/~sheepy/fruit']
+# fruit = { path = "../fruit" }
+# [patch.'https://git.sr.ht/~sheepy/cabbage']
+# cabbage = { path = "../cabbage" }
+# [patch.'https://git.sr.ht/~sheepy/citro2d-rs']
+# citro2d = { path = "../citro2d-rs/citro2d" }
+# citro2d-sys = { path = "../citro2d-rs/citro2d-sys" }

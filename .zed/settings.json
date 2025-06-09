@@ -1,0 +1,21 @@
+{
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "overrideCommand": [
+            "cargo",
+            "3ds",
+            "clippy",
+            "--workspace",
+            "--all-targets",
+            "--message-format=json"
+          ]
+        }
+      },
+      "checkOnSave": {
+        "command": "clippy"
+      }
+    }
+  }
+}
