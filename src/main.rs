@@ -3,11 +3,19 @@
 //! - scanning a QR code for the ouath token
 //! - saving the token into OLV's "local storage"
 
+#![feature(panic_can_unwind)]
+#![feature(panic_payload_as_str)]
+pub mod panic_hook;
+
 use cabbage::prelude::*;
 use citro2d::prelude::*;
-use ctru::{prelude::*, services::gfx::BottomScreen};
+use ctru::{
+    prelude::*,
+    services::{cam::Cam, gfx::BottomScreen},
+};
 use fruit::prelude::*;
 
+pub mod qr;
 pub mod ui;
 
 #[derive(Default)]
@@ -29,6 +37,10 @@ impl StateImpl<AppState> for State<'_, AppState> {
             &c2d_instance,
         );
 
+        let mut cam = Cam::new()?;
+        let mut scanner = qr::scan::Scanner::default();
+        let mut camera = qr::camera::CameraState::new(&mut cam)?;
+
         let mut ui = ui::background::Background::default();
 
         #[allow(unused_variables)]
@@ -41,6 +53,13 @@ impl StateImpl<AppState> for State<'_, AppState> {
             keys_up = self.handles.hid.keys_up();
             !keys_held.contains(KeyPad::START) && self.handles.apt.main_loop()
         } {
+            println!("capturing");
+            camera.capture()?;
+            println!("converting");
+            camera.convert(&mut scanner.image);
+            println!("scanning");
+            scanner.scan()?;
+            println!("scanned!");
             {
                 let mut draw_target = target.begin();
 
@@ -58,6 +77,8 @@ impl StateImpl<AppState> for State<'_, AppState> {
 }
 
 fn main() {
+    std::panic::set_hook(Box::new(panic_hook::panic_hook));
+
     let mut apt = Apt::new().expect("failed to obtain applet service handle");
     let mut hid = Hid::new().expect("failed to obtain HID handle");
     let mut gfx = Gfx::new().expect("failed to obtain GFX handle");

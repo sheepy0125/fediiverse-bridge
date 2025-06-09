@@ -19,6 +19,9 @@ ctru-sys = { git = "https://github.com/rust3ds/ctru-rs" }
 citro3d = { git = "https://github.com/rust3ds/citro3d-rs" }
 
 anyhow = { version = "1.0.93", features = ["backtrace"] }
+bytemuck = "1.23.1"
+bardecoder = "0.5.0"
+image = "0.24.9"
 
 # local development!
 # [patch.'https://git.sr.ht/~sheepy/fruit']
