@@ -66,7 +66,7 @@ impl StateImpl<AppState<'_>> for State<'_, AppState<'_>> {
             {
                 let mut draw_target = target.begin();
 
-                draw_target.clear((0xff, 0xff, 0xff, 0xff));
+                draw_target.clear(0xffffffff);
                 ui.update_state(&self.handles, &mut self.app)?;
                 ui.blit_mut()?;
 

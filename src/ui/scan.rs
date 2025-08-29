@@ -22,7 +22,7 @@ impl Default for QrScan {
             (F_TOP_WIDTH / 2., F_TOP_HEIGHT - 15.),
             TextDrawStyle::default()
                 .with_alignment(HorizAlignment::Center, VertAlignment::Center)
-                .with_color((0xff, 0xff, 0xff, 0xff)),
+                .with_color(0xffffffff),
         );
         Self {
             scan_frame: 0,
@@ -70,7 +70,7 @@ impl Blit for QrScan {
         // Textbox
         Rectangle::new(
             BoundingBox::with_corners((0., F_TOP_HEIGHT - 30.), (F_TOP_WIDTH, F_TOP_HEIGHT)),
-            RectangleDrawStyle::default().with_fill((0, 0, 0, 127)),
+            RectangleDrawStyle::default().with_fill(0x127),
         )
         .blit()?;
         self.text.blit()?;
