@@ -1,13 +1,15 @@
 //! Token scan screen
 
-use crate::AppState;
+use std::str::FromStr;
+
+use crate::{AppState, QrCode};
 
 use cabbage::{F_TOP_HEIGHT, F_TOP_WIDTH};
 use citro2d::prelude::*;
 use fruit::prelude::*;
 
 /// Scan for a QR every n frames
-pub const SCAN_FRAMES: usize = 3;
+pub const SCAN_FRAMES: usize = 1;
 
 pub struct QrScan {
     pub text: Text<'static>,
@@ -42,9 +44,12 @@ impl Lifecycle<AppState<'_>> for QrScan {
         state.camera.capture()?;
         state.camera.convert(&mut state.scanner.image);
         self.scan_frame += 1;
-        if self.scan_frame > SCAN_FRAMES {
-            if let Some(frame) = state.scanner.scan()? {
-                state.token.replace(frame);
+        if self.scan_frame >= SCAN_FRAMES {
+            if let Some(frame) = state.scanner.scan() {
+                match QrCode::from_str(&frame) {
+                    Ok(parsed) => state.qr = Some(parsed),
+                    Err(e) => println!("Invalid QR code: {e}"),
+                };
             };
 
             self.scan_frame = 0;
@@ -70,7 +75,7 @@ impl Blit for QrScan {
         // Textbox
         Rectangle::new(
             BoundingBox::with_corners((0., F_TOP_HEIGHT - 30.), (F_TOP_WIDTH, F_TOP_HEIGHT)),
-            RectangleDrawStyle::default().with_fill(0x127),
+            RectangleDrawStyle::default().with_fill(127),
         )
         .blit()?;
         self.text.blit()?;

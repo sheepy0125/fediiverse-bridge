@@ -20,14 +20,16 @@ citro3d = { git = "https://github.com/rust3ds/citro3d-rs" }
 
 anyhow = { version = "1.0.93", features = ["backtrace"] }
 bytemuck = "1.23.1"
-bardecoder = "0.5.0"
-image = "0.24.9"
+image = "0.25.6"
+rqrr = "0.10.0"
+http = "1.3.1"
+ureq = { version = "3.1.0", default-features = false }
 
 # local development!
-# [patch.'https://git.sr.ht/~sheepy/fruit']
-# fruit = { path = "../fruit" }
-# [patch.'https://git.sr.ht/~sheepy/cabbage']
-# cabbage = { path = "../cabbage" }
-# [patch.'https://git.sr.ht/~sheepy/citro2d-rs']
-# citro2d = { path = "../citro2d-rs/citro2d" }
-# citro2d-sys = { path = "../citro2d-rs/citro2d-sys" }
+[patch.'https://git.sr.ht/~sheepy/fruit']
+fruit = { path = "../fruit" }
+[patch.'https://git.sr.ht/~sheepy/cabbage']
+cabbage = { path = "../cabbage" }
+[patch.'https://git.sr.ht/~sheepy/citro2d-rs']
+citro2d = { path = "../citro2d-rs/citro2d" }
+citro2d-sys = { path = "../citro2d-rs/citro2d-sys" }

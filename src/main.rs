@@ -3,25 +3,59 @@
 //! - scanning a QR code for the ouath token
 //! - saving the token into OLV's "local storage"
 
-#![feature(panic_can_unwind)]
-#![feature(panic_payload_as_str)]
-pub mod panic_hook;
+#![allow(unused_imports)]
 
+use std::{mem::MaybeUninit, str::FromStr};
+
+use anyhow::anyhow;
 use cabbage::prelude::*;
 use citro2d::prelude::*;
 use ctru::{
+    error::ResultCode,
     prelude::*,
-    services::{cam::Cam, gfx::TopScreen},
+    services::{
+        cam::Cam,
+        fs,
+        gfx::{BottomScreen, TopScreen},
+    },
 };
 use fruit::prelude::*;
 
+pub mod olv;
 pub mod qr;
 pub mod ui;
+
+/// fediiverse;<setup host>;<token>
+#[derive(Debug)]
+pub struct QrCode {
+    pub setup_host: String,
+    pub token: String,
+}
+impl FromStr for QrCode {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut chunks = s.split(';');
+        let Some("fediiverse") = chunks.next() else {
+            return Err(anyhow!("expected 'fediiverse' magic"));
+        };
+        let Some(url) = chunks.next() else {
+            return Err(anyhow!("no url"));
+        };
+        let Some(token) = chunks.next() else {
+            return Err(anyhow!("no token"));
+        };
+
+        Ok(Self {
+            setup_host: url.to_string(),
+            token: token.to_string(),
+        })
+    }
+}
 
 pub struct AppState<'a> {
     pub scanner: qr::scanner::Scanner,
     pub camera: qr::camera::CameraState<'a>,
-    pub token: Option<String>,
+    pub qr: Option<QrCode>,
 }
 impl<'a> AppState<'a> {
     fn new(cam: &'a mut Cam) -> anyhow::Result<Self> {
@@ -30,28 +64,33 @@ impl<'a> AppState<'a> {
         Ok(Self {
             camera,
             scanner,
-            token: None,
+            qr: None,
         })
     }
 }
 
 impl StateImpl<AppState<'_>> for State<'_, AppState<'_>> {
     fn main(&mut self) -> Result<(), Error> {
-        let mut c3d_instance = citro3d::Instance::new().unwrap();
+        let _console = Console::new(self.handles.gfx.bottom_screen.borrow_mut());
 
         self.handles.apt.set_sleep_allowed(true);
         self.handles.apt.set_home_allowed(true);
-        let cfgu = ctru::services::cfgu::Cfgu::new().unwrap();
 
-        let _console = Console::new(self.handles.gfx.bottom_screen.borrow_mut());
+        let mut c3d_instance = citro3d::Instance::new().unwrap();
+        let cfgu = ctru::services::cfgu::Cfgu::new().unwrap();
+        let soc = ctru::services::soc::Soc::new().unwrap();
 
         let c2d_instance = citro2d::Instance::new(&mut c3d_instance, &cfgu)?;
-        let mut target = citro2d::render::Target::<TopScreen, _>::new(
+        let mut top_target = citro2d::render::Target::<TopScreen, _>::new(
             self.handles.gfx.top_screen.borrow_mut(),
             &c2d_instance,
         );
 
-        let mut ui = ui::scan::QrScan::default();
+        let mut qr_scan = ui::scan::QrScan::default();
+        let mut scanned = false;
+
+        println!("Welcome to Fediiverse setup!");
+        println!("Please scan the QR code...");
 
         #[allow(unused_variables)]
         let (mut keys_held, mut keys_down, mut keys_up);
@@ -63,24 +102,29 @@ impl StateImpl<AppState<'_>> for State<'_, AppState<'_>> {
             keys_up = self.handles.hid.keys_up();
             !keys_held.contains(KeyPad::START) && self.handles.apt.main_loop()
         } {
-            {
-                let mut draw_target = target.begin();
-
-                draw_target.clear(0xffffffff);
-                ui.update_state(&self.handles, &mut self.app)?;
-                ui.blit_mut()?;
-
-                target = draw_target.end();
+            let mut draw_target = top_target.begin();
+            draw_target.clear(0xffffffff);
+            if !scanned {
+                qr_scan.update_state(&self.handles, &mut self.app)?;
             }
+            qr_scan.blit_mut()?;
+            top_target = draw_target.end();
+
+            if let Some(qr) = &self.app.qr.take() {
+                println!("Scanned!");
+                scanned = true;
+                olv::patch::download(&qr.setup_host, &soc)?;
+                olv::local_storage::patch_local_storage("fediiverse_token", &qr.token)?;
+            }
+
             std::thread::yield_now();
-            self.handles.gfx.wait_for_vblank();
         }
         Ok(())
     }
 }
 
 fn main() {
-    std::panic::set_hook(Box::new(panic_hook::panic_hook));
+    ctru::set_panic_hook(false);
 
     let mut apt = Apt::new().expect("failed to obtain applet service handle");
     let mut hid = Hid::new().expect("failed to obtain HID handle");

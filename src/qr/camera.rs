@@ -11,7 +11,7 @@ impl<'a> CameraState<'a> {
     pub fn new(cam: &'a mut Cam) -> anyhow::Result<Self> {
         // N.B. `outer_left_cam` and `outer_right_cam` by themselves won't work --
         // the capture timeout is reached -- only using `both_outer_cams` works.
-        let camera = &mut cam.both_outer_cams;
+        let camera = &mut cam.outer_right_cam;
         camera.set_view_size(ViewSize::TopLCD)?;
         camera.set_output_format(OutputFormat::Rgb565)?;
         camera.set_noise_filter(true)?;
