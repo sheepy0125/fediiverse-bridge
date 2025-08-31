@@ -26,10 +26,10 @@ http = "1.3.1"
 ureq = { version = "3.1.0", default-features = false }
 
 # local development!
-[patch.'https://git.sr.ht/~sheepy/fruit']
-fruit = { path = "../fruit" }
-[patch.'https://git.sr.ht/~sheepy/cabbage']
-cabbage = { path = "../cabbage" }
-[patch.'https://git.sr.ht/~sheepy/citro2d-rs']
-citro2d = { path = "../citro2d-rs/citro2d" }
-citro2d-sys = { path = "../citro2d-rs/citro2d-sys" }
+# [patch.'https://git.sr.ht/~sheepy/fruit']
+# fruit = { path = "../fruit" }
+# [patch.'https://git.sr.ht/~sheepy/cabbage']
+# cabbage = { path = "../cabbage" }
+# [patch.'https://git.sr.ht/~sheepy/citro2d-rs']
+# citro2d = { path = "../citro2d-rs/citro2d" }
+# citro2d-sys = { path = "../citro2d-rs/citro2d-sys" }
